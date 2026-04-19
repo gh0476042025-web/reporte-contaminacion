@@ -11,7 +11,7 @@ app.use(express.static(path.join(__dirname, 'public'))); // sirve el index.html 
 
 // --- Conexión a MongoDB Atlas ---
 // 👇 REEMPLAZA ESTE LINK CON EL TUYO DEL PASO 6
-const MONGO_URL  = 'mongodb+srv://alexi:admin1234@cluster0.r0f6gt0.mongodb.net/reportes?retryWrites=true&w=majority';
+const MONGO_URL  =  process.env.MONGO_URL || 'mongodb+srv://alexi:admin1234@cluster0.r0f6gt0.mongodb.net/reportes?retryWrites=true&w=majority';
 
 mongoose.connect(MONGO_URL)
   .then(() => console.log('✅ Conectado a MongoDB Atlas'))
