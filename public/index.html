@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reportes de Contaminación</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --verde: #2d6a4f;
+      --verde-claro: #52b788;
+      --fondo: #f0f4f0;
+    }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); padding: 30px 20px; }
+    header { text-align: center; margin-bottom: 35px; }
+    header h1 { font-size: 1.9rem; color: var(--verde); }
+    header p { color: #666; margin-top: 6px; }
+    .contenedor {
+      max-width: 1100px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 25px;
+    }
+    @media(max-width:700px){ .contenedor{ grid-template-columns:1fr; } }
+    .card { background: #fff; border-radius: 12px; padding: 26px; box-shadow: 0 4px 18px rgba(0,0,0,0.08); }
+    .card h2 { color: var(--verde); margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid var(--fondo); }
+    .campo { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: #444; }
+    input, select, textarea {
+      width: 100%; padding: 10px 13px; border: 1.5px solid #ddd;
+      border-radius: 8px; font-size: 0.93rem; font-family: inherit; transition: border-color .2s;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--verde-claro); }
+    textarea { resize: vertical; min-height: 95px; }
+    button {
+      width: 100%; padding: 12px; background: var(--verde); color: #fff;
+      border: none; border-radius: 8px; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: background .2s;
+    }
+    button:hover { background: var(--verde-claro); }
+    #mensaje { margin-top: 12px; padding: 10px 13px; border-radius: 8px; font-size: 0.88rem; display: none; }
+    #mensaje.exito { background: #d4edda; color: #27ae60; display: block; }
+    #mensaje.error  { background: #fde8e8; color: #c0392b; display: block; }
+    #lista-reportes { max-height: 500px; overflow-y: auto; }
+    .item { border: 1px solid #e0e8e0; border-radius: 10px; padding: 14px; margin-bottom: 12px; background: #f9fcf9; }
+    .tipo {
+      display: inline-block; background: var(--verde); color: #fff;
+      font-size: 0.72rem; font-weight: 700; padding: 3px 10px;
+      border-radius: 20px; margin-bottom: 7px; text-transform: uppercase;
+    }
+    .item h3 { font-size: 0.93rem; margin-bottom: 4px; }
+    .item p  { font-size: 0.83rem; color: #555; margin-bottom: 3px; }
+    .item .fecha { font-size: 0.72rem; color: #999; margin-top: 5px; }
+    .vacio { text-align: center; color: #aaa; padding: 35px 0; font-size: 0.88rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🌿 Sistema de Reportes de Contaminación</h1>
+  <p>Registra problemas ambientales de tu comunidad</p>
+</header>
+
+<div class="contenedor">
+
+  <!-- FORMULARIO -->
+  <div class="card">
+    <h2>📋 Nuevo Reporte</h2>
+
+    <div class="campo">
+      <label>Nombre completo</label>
+      <input type="text" id="nombre" placeholder="Ej: Juan Pérez"/>
+    </div>
+    <div class="campo">
+      <label>Dirección del lugar afectado</label>
+      <input type="text" id="direccion" placeholder="Ej: Calle Principal #45, San Salvador"/>
+    </div>
+    <div class="campo">
+      <label>Tipo de contaminación</label>
+      <select id="tipo">
+        <option value="">-- Selecciona --</option>
+        <option value="Aire">🌬️ Aire</option>
+        <option value="Agua">💧 Agua</option>
+        <option value="Suelo">🌱 Suelo</option>
+        <option value="Ruido">🔊 Ruido</option>
+        <option value="Visual">👁️ Visual</option>
+        <option value="Otro">❓ Otro</option>
+      </select>
+    </div>
+    <div class="campo">
+      <label>Descripción del problema</label>
+      <textarea id="descripcion" placeholder="Describe brevemente qué está pasando..."></textarea>
+    </div>
+
+    <button onclick="enviar()">Enviar Reporte</button>
+    <div id="mensaje"></div>
+  </div>
+
+  <!-- LISTA -->
+  <div class="card">
+    <h2>📂 Reportes Registrados</h2>
+    <div id="lista-reportes"><p class="vacio">Cargando...</p></div>
+  </div>
+
+</div>
+
+<script>
+  async function enviar() {
+    const nombreCompleto    = document.getElementById('nombre').value.trim();
+    const direccion         = document.getElementById('direccion').value.trim();
+    const tipoContaminacion = document.getElementById('tipo').value;
+    const descripcion       = document.getElementById('descripcion').value.trim();
+
+    if (!nombreCompleto || !direccion || !tipoContaminacion || !descripcion) {
+      mostrarMensaje('Completa todos los campos.', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/reportes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombreCompleto, direccion, tipoContaminacion, descripcion })
+      });
+      const datos = await res.json();
+
+      if (res.ok) {
+        mostrarMensaje('✅ Reporte enviado correctamente.', 'exito');
+        document.getElementById('nombre').value      = '';
+        document.getElementById('direccion').value   = '';
+        document.getElementById('tipo').value        = '';
+        document.getElementById('descripcion').value = '';
+        cargarReportes();
+      } else {
+        mostrarMensaje('Error: ' + datos.error, 'error');
+      }
+    } catch {
+      mostrarMensaje('No se pudo conectar con el servidor.', 'error');
+    }
+  }
+
+  async function cargarReportes() {
+    try {
+      const res      = await fetch('/api/reportes');
+      const reportes = await res.json();
+      const lista    = document.getElementById('lista-reportes');
+
+      if (!reportes.length) {
+        lista.innerHTML = '<p class="vacio">No hay reportes aún.</p>';
+        return;
+      }
+
+      lista.innerHTML = reportes.map(r => `
+        <div class="item">
+          <span class="tipo">${r.tipoContaminacion}</span>
+          <h3>${r.nombreCompleto}</h3>
+          <p>📍 ${r.direccion}</p>
+          <p>${r.descripcion}</p>
+          <p class="fecha">🕐 ${new Date(r.fecha).toLocaleString('es-SV')}</p>
+        </div>
+      `).join('');
+    } catch {
+      document.getElementById('lista-reportes').innerHTML = '<p class="vacio">Error al cargar.</p>';
+    }
+  }
+
+  function mostrarMensaje(texto, tipo) {
+    const el = document.getElementById('mensaje');
+    el.textContent = texto;
+    el.className = tipo;
+  }
+
+  cargarReportes();
+</script>
+</body>
+</html>
